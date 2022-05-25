@@ -4,27 +4,22 @@ const jwt = require("jsonwebtoken");
 const AdminOption = require("../db/admin");
 const { sucessResponse, failResponse } = require("../db/responsePattern");
 
-const amdinOpt = new AdminOption();
+const adminOpt = new AdminOption();
 
 const tokenSecret = "aTokenKey";
 
+const CryptoJS = require("crypto-js");
+
 // 验证登录的账号和密码
 router.post("/", (req, res, next) => {
-  const accountInfo = req.body;
-  amdinOpt.verifyAccount(accountInfo).then((result) => {
+  const accountInfo = JSON.parse(CryptoJS.TripleDES.decrypt(req.body.user,'cryptoKey').toString(CryptoJS.enc.Utf8))
+  adminOpt.verifyAccount(accountInfo).then((result) => {
     if (result) {
       const token = jwt.sign({ aud: accountInfo.account }, tokenSecret, {
-        expiresIn: "2h",
-      });
-      res.cookie("token", token, {
-        // httpOnly: true,
-        path: "/",
-        secure: false,
-        domain: "localhost",
-        maxAge:600000,
-        SameSite:'none'
+        expiresIn: "900000",
       });
       const resp = JSON.parse(JSON.stringify(sucessResponse));
+      resp.data.token = token;
       res.send(resp);
     } else {
       const resp = JSON.parse(JSON.stringify(failResponse));
@@ -35,19 +30,25 @@ router.post("/", (req, res, next) => {
 });
 
 //验证用户的token  考虑使用中间件
-router.get("/verifyUser", (req, res, next) => {
-  const token = req.cookies.token;
-  console.log(req.cookies, "cookieNa,me");
-  res.set({
-    "Access-Control-Allow-Origin": "http://localhost:8080",
-    "Access-Control-Allow-Credentials": "true",
-  });
+router.post("/verifyUser", (req, res, next) => {
+  const token = req.body.token;
   if (token) {
-    console.log(token, "??");
-    const verifyRes = jwt.verify(token, tokenSecret);
-    res.send({ verify: verifyRes });
+    jwt.verify(token, tokenSecret, (err, code) => {
+      if (err) {
+        const resp = JSON.parse(JSON.stringify(failResponse));
+        resp.message = "没有token或token已过期";
+        res.send(resp);
+      } else {
+        const resp = JSON.parse(JSON.stringify(sucessResponse));
+        resp.data = code;
+        resp.message = "token验证成功";
+        res.send(resp)
+      }
+    });
   } else {
-    res.send({ verify: false });
+    const resp = JSON.parse(JSON.stringify(failResponse));
+    resp.message = "没有token或token已过期";
+    res.send(resp);
   }
 });
 

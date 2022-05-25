@@ -11,7 +11,11 @@ router.get("/getArticleDetail", function (req, res, next) {
     "Content-Type": "text/plain",
   });
   database.getOneArticle(req.query.title).then((data) => {
-    res.send(data.content);
+    if(data !== null){
+      res.send(data.content);
+    }else{
+      res.send('no articles')
+    }
   });
 });
 

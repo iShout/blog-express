@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 class InitDatabase {
   constructor() {
-    this.dbURL = "mongodb://localhost:27017/";
+    this.dbURL = "mongodb://127.0.0.1:27017/";
     this.articleSchema = mongoose.Schema({
       title: String,
       content: String,

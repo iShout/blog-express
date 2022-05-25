@@ -10,7 +10,7 @@ class AdminOption {
   }
 
   async verifyAccount(userInfo){
-    let query = await this.Account.findOne({account:userInfo.account,password:userInfo.password})
+    let query = await this.Account.findOne(userInfo)
     return query === null ? false:true
   }
 }
